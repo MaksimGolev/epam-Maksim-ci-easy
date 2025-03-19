@@ -7,22 +7,48 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Git
+        run: |
+          git fetch --tags
+
+      - name: Check if tag already exists
+        run: |
+          TAG_EXISTS=$(git tag -l "v1.0.0-${{ github.run_id }}")
+          if [ -n "$TAG_EXISTS" ]; then
+            echo "Tag v1.0.0-${{ github.run_id }} already exists. Skipping release.";
+            exit 0;
+          fi
+
+      - name: Check if task.html has changed
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          if [ "$COMMIT_COUNT" -le 1 ]; then
+            echo "Not enough commits to compare. Skipping file check.";
+          else
+            CHANGED=$(git diff --name-only HEAD~1 | grep 'task.html')
+            if [ -z "$CHANGED" ]; then
+              echo "No changes detected in task.html. Skipping release.";
+              exit 0;
+            fi
+          fi
+
       - name: Archive HTML page
         uses: montudor/action-zip@v1
         with:
-          args: "zip -r archive.zip index.html"
+          args: "zip -r archive.zip task.html"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: v1.0.0
+          tag_name: v1.0.0-${{ github.run_id }}
           release_name: epam-Maksim-ci-easy
           draft: false
           prerelease: false
-          assets: archive.zip
+          files: archive.zip
