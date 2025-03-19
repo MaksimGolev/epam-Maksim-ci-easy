@@ -7,9 +7,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git fetch --tags
+
+      - name: Check if tag already exists
+        run: |
+          TAG_EXISTS=$(git tag -l "v1.0.0-${{ github.run_id }}")
+          if [ -n "$TAG_EXISTS" ]; then
+            echo "Tag v1.0.0-${{ github.run_id }} already exists. Skipping release.";
+            exit 0;
+          fi
+
+      - name: Check if task.html has changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 | grep 'task.html')
+          if [ -z "$CHANGED" ]; then
+            echo "No changes detected in task.html. Skipping release.";
+            exit 0;
+          fi
 
       - name: Archive HTML page
         uses: montudor/action-zip@v1
@@ -26,3 +47,4 @@ jobs:
           draft: false
           prerelease: false
           files: archive.zip
+
