@@ -21,7 +21,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v1.0.0
-          release_name: epam-YOURNAME-ci-easy
+          release_name: epam-Maksim-ci-easy
           draft: false
           prerelease: false
 
